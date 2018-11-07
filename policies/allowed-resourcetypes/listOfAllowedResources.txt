@@ -1,0 +1,9 @@
+{
+    "listOfAllowedLocations":  {
+      "value": [
+        "westus",
+        "westeurope",
+        "japanwest"
+      ]
+    }
+}
