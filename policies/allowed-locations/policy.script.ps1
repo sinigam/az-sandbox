@@ -5,7 +5,7 @@
 ########################### Logging in to your account, selecting a subscription, and creating a resource group ###########################
 
 # Connect to your account once by using this command
-Connect-AzureRmAccount
+#Connect-AzureRmAccount
 
 # Get the list of subscriptions
 Get-AzureRmSubscription
@@ -48,9 +48,9 @@ $policyScope = Get-AzureRmResourceGroup -Name $resourceGroupName
 # $policyScope = Get-AzureRmSubscription -SubscriptionName <Name of Subscription>
 # $policyScope = Get-AzureRmManagementGroup -GroupName <Name of Management Group>
 
-$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -Description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
+$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
 $definition
-$assignment = New-AzureRmPolicyAssignment -Name $assignmentName -PolicyDefinition $definition -Scope $policyScope.ResourceId -PolicyParameter $allowedLocationsFile
+$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId -PolicyParameter $allowedLocationsFile -PolicyDefinition $definition
 $assignment
 #$assignment = New-AzureRmPolicyAssignment -Name 'RestrictLocationPolicyAssignment' -PolicyDefinition $Policy -Scope $ResourceGroup.ResourceId -PolicyParameter .\AllowedLocations.json
 

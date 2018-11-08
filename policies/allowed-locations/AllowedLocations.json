@@ -1,11 +1,11 @@
 {
-    "listOfAllowedLocations":  {
-      "value": [
-        "eastus2",
-        "eastus",
-        "westus",
-        "westeurope",
-        "japanwest"
-      ]
-    }
+  "listOfAllowedLocations":  {
+    "value": [
+      "westus",
+      "eastus",
+      "eastus2",
+      "westeurope",
+      "japanwest"
+    ]
+  }
 }
