@@ -1,6 +1,13 @@
 {
 	"listOfAllowedLocations": {
 		"type": "Array",
+      		"value": [
+        		"eastus2",
+        		"eastus",
+        		"westus",
+        		"westeurope",
+        		"northeurope"
+      		]
 		"metadata": {
 			"description": "The list of locations that can be specified when deploying resources.",
 			"strongType": "location",

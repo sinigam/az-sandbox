@@ -1,31 +1,34 @@
 ﻿# Policy script to allow provisioning of specified resources
 
-<#
-############# Logging in to your account #############
+# Instructions: Remove the '<' symbol on the head of each comment block to enable that section
+
+########################### Logging in to your account, selecting a subscription, and creating a resource group ###########################
 
 # Connect to your account by using this command
-Connect-AzureRmAccount
+#Connect-AzureRmAccount
 
 # Get the list of subscriptions
 Get-AzureRmSubscription
+
 # Select one of the subscriptions
-Select-AzureRmSubscription <Id or Name>
+$SubscriptionName = 'Pay-As-You-Go'
 
-######################################################
-#>
+Select-AzureRmSubscription $SubscriptionName
 
-Select-AzureRmSubscription Pay-As-You-Go
+# Store subscription id
+$CurrentSubscription = Get-AzureRmSubscription -SubscriptionName $SubscriptionName
 
 # Create a blank resource group to test the policy
 $resourceGroupName = 'rg-policy-test'
 # Create the resource group - change the location and tags as desired
 New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus2 -Tag @{Type='sid-test'; Group='policy'}
 
+#>
 
-# Policy Creation
+########################### Policy Creation ###########################
 
-# To create the policy, we need to make 
-# Policy related parameters
+# To create the policy, we need to create the policy, then assign it to a scope
+# Policy related variables
 $policyName = 'allowed-resourcetypes'
 $policyDisplayName = 'Allowed Resource Types'
 $policyDescription = 'This policy enables you to specify the resource types that your organization can deploy.'
@@ -46,15 +49,36 @@ $policyScope = Get-AzureRmResourceGroup -Name $resourceGroupName
 # Now, we need to create the list of allowed resource types - this is an additional parameter defined in the parameters.json file defined in the repository ($policyParametersFile)
 #$listOfAllowedResourceTypes = @{'listOfResourceTypesAllowed'=(Get-AzureRmResourceProvider -ListAvailable | Select-Object ProviderNamespace)}
 #$listOfAllowedResourceTypes = @{'listOfResourceTypesAllowed'=('Microsoft.Compute','Microsoft.Network')}
-$listResourceTypes = @{'listOfResourceTypesAllowed'='Microsoft.Compute/availabilitySets'}
+$listResourceTypes = @{'listOfResourceTypesAllowed'='Microsoft.Compute'}
 #$AllowedLocations = @{'listOfAllowedLocations'=($Locations.location)}
 
-$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId 8e2b803f-ef35-4093-97e0-b190a9680de3 -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
-$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope -listOfResourceTypesAllowed $listResourceTypes -PolicyDefinition $definition
+$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
+$definition
+$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId -listOfResourceTypesAllowed $listResourceTypes -PolicyDefinition $definition
+$assignment
 
-# Test the policy
+#>
 
+########################### Testing the policy ###########################
 
-<# Clean up
+#Set this once for username and password
+# $cred = Get-Credential
+
+New-AzureRmVm `
+    -ResourceGroupName $resourceGroupName `
+    -Name "myVM" `
+    -Location "East US" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -Credential $cred `
+    -OpenPorts 80,3389
+
+#>
+
+<########################### Clean up ###########################
+
 Remove-AzureRmResourceGroup -Name $resourceGroupName
+
 #>

@@ -1,60 +1,82 @@
 ﻿# Policy script to allow provisioning in specific locations
 
-<#
-############# Logging in to your account #############
+# Instructions: Remove the '<' symbol on the head of each comment block to enable that section
 
-# Connect to your account by using this command
-Connect-AzureRmAccount
+########################### Logging in to your account, selecting a subscription, and creating a resource group ###########################
+
+# Connect to your account once by using this command
+#Connect-AzureRmAccount
 
 # Get the list of subscriptions
 Get-AzureRmSubscription
+
 # Select one of the subscriptions
-Select-AzureRmSubscription <Id or Name>
+$SubscriptionName = 'Pay-As-You-Go'
 
-######################################################
-#>
+Select-AzureRmSubscription $SubscriptionName
 
-Select-AzureRmSubscription Pay-As-You-Go
+# Store subscription id
+$CurrentSubscription = Get-AzureRmSubscription -SubscriptionName $SubscriptionName
 
 # Create a blank resource group to test the policy
 $resourceGroupName = 'rg-policy-test'
 # Create the resource group - change the location and tags as desired
 New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus2 -Tag @{Type='sid-test'; Group='policy'}
 
+#>
 
-# Policy Creation
+########################### Policy Creation ###########################
 
-# To create the policy, we need to make 
-# Policy related parameters
+# To create the policy, we need to create the policy, then assign it to a scope
+# Policy related variables
 $policyName = 'allowed-locations'
 $policyDisplayName = 'Allowed Locations'
 $policyDescription = 'This policy enables you to specify the locations that your organization can deploy.'
 
 # Link to the JSON template for the policy - rules and parameters files
-$policyRulesFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-resourcetypes/policy.rules.json'
-$policyParametersFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-resourcetypes/policy.parameters.json'
+$policyRulesFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/policy.rules.json'
+$policyParametersFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/policy.parameters.json'
+$allowedLocationsFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/AllowedLocations.json'
 
 # Name for the particular assignment of the policy
-$assignmentName = 'allowedResourceTypesPolicy-test'
+$assignmentName = 'RestrictLocationPolicyAssignment-test'
 
 # Where should the policy be applied - can range from management group, subscription, resource group.
 # Here, we select the test resource group we just created
 $policyScope = Get-AzureRmResourceGroup -Name $resourceGroupName
+
 # $policyScope = Get-AzureRmSubscription -SubscriptionName <Name of Subscription>
 # $policyScope = Get-AzureRmManagementGroup -GroupName <Name of Management Group>
 
-# Now, we need to create the list of allowed resource types - this is an additional parameter defined in the parameters.json file defined in the repository ($policyParametersFile)
-#$listOfAllowedResourceTypes = @{'listOfResourceTypesAllowed'=(Get-AzureRmResourceProvider -ListAvailable | Select-Object ProviderNamespace)}
-#$listOfAllowedResourceTypes = @{'listOfResourceTypesAllowed'=('Microsoft.Compute','Microsoft.Network')}
-$listResourceTypes = @{'listOfResourceTypesAllowed'='Microsoft.Compute/availabilitySets'}
-#$AllowedLocations = @{'listOfAllowedLocations'=($Locations.location)}
+$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
+$definition
+$assignment = New-AzureRmPolicyAssignment -Name $assignmentName -PolicyDefinition $definition -Scope $policyScope.ResourceId -PolicyParameter $policyParametersFile
+$assignment
+#$assignment = New-AzureRmPolicyAssignment -Name 'RestrictLocationPolicyAssignment' -PolicyDefinition $Policy -Scope $ResourceGroup.ResourceId -PolicyParameter .\AllowedLocations.json
 
-$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId 8e2b803f-ef35-4093-97e0-b190a9680de3 -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
-$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope -listOfResourceTypesAllowed $listResourceTypes -PolicyDefinition $definition
-
-# Test the policy
+######################################################>
 
 
-<# Clean up
+########################### Testing the policy ###########################
+
+#Set this once for username and password
+# $cred = Get-Credential
+
+New-AzureRmVm `
+    -ResourceGroupName $resourceGroupName `
+    -Name "myVM" `
+    -Location japaneast `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -Credential $cred `
+    -OpenPorts 80,3389
+
+#>
+
+<########################### Clean up ###########################
+
 Remove-AzureRmResourceGroup -Name $resourceGroupName
+
 #>
