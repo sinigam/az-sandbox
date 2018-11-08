@@ -50,7 +50,7 @@ $policyScope = Get-AzureRmResourceGroup -Name $resourceGroupName
 
 $definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
 $definition
-$assignment = New-AzureRmPolicyAssignment -Name $assignmentName -PolicyDefinition $definition -Scope $policyScope.ResourceId -PolicyParameter $policyParametersFile
+$assignment = New-AzureRmPolicyAssignment -Name $assignmentName -PolicyDefinition $definition -Scope $policyScope.ResourceId -PolicyParameter $allowedLocationsFile
 $assignment
 #$assignment = New-AzureRmPolicyAssignment -Name 'RestrictLocationPolicyAssignment' -PolicyDefinition $Policy -Scope $ResourceGroup.ResourceId -PolicyParameter .\AllowedLocations.json
 
