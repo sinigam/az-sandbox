@@ -1,4 +1,4 @@
-﻿# Policy script to allow provisioning in specific locations
+﻿# Policy script to allow provisioning of only approved VM images
 
 # Instructions: Remove the '<' symbol on the head of each comment block to enable that section
 
@@ -21,7 +21,7 @@ $CurrentSubscription = Get-AzureRmSubscription -SubscriptionName $SubscriptionNa
 # Create a blank resource group to test the policy
 $resourceGroupName = 'rg-policy-test'
 # Create the resource group - change the location and tags as desired
-New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus -Tag @{Type='sid-test'; Group='policy'}
+New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus2 -Tag @{Type='sid-test'; Group='policy'}
 
 #>
 
@@ -29,17 +29,17 @@ New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus -Tag @{Type='
 
 # To create the policy, we need to create the policy, then assign it to a scope
 # Policy related variables
-$policyName = 'allowed-locations'
-$policyDisplayName = 'Allowed Locations'
-$policyDescription = 'This policy enables you to specify the locations that your organization can deploy.'
+$policyName = 'allowed-images'
+$policyDisplayName = 'Allowed VM Images'
+$policyDescription = 'This policy enables you to specify the VM images that your organization can deploy.'
 
 # Link to the JSON template for the policy - rules and parameters files
-$policyRulesFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/policy.rules.json'
-$policyParametersFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/policy.parameters.json'
-$allowedLocationsFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-locations/AllowedLocations.json'
+$policyRulesFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-vm-images/policy.rules.json'
+$policyParametersFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-vm-images/policy.parameters.json'
+$allowedImagesFile = 'https://raw.githubusercontent.com/sinigam/az-sandbox/master/policies/allowed-vm-images/AllowedImages.json'
 
 # Name for the particular assignment of the policy
-$assignmentName = 'RestrictLocationPolicyAssignment-test'
+$assignmentName = 'RestrictVMImagesPolicyAssignment-test'
 
 # Where should the policy be applied - can range from management group, subscription, resource group.
 # Here, we select the test resource group we just created
@@ -48,16 +48,11 @@ $policyScope = Get-AzureRmResourceGroup -Name $resourceGroupName
 # $policyScope = Get-AzureRmSubscription -SubscriptionName <Name of Subscription>
 # $policyScope = Get-AzureRmManagementGroup -GroupName <Name of Management Group>
 
-#$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
-#$definition
-#$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId -PolicyParameter $allowedLocationsFile -PolicyDefinition $definition
-#$assignment
-#$assignment = New-AzureRmPolicyAssignment -Name 'RestrictLocationPolicyAssignment' -PolicyDefinition $Policy -Scope $ResourceGroup.ResourceId -PolicyParameter .\AllowedLocations.json
-
-$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
+$definition = New-AzureRmPolicyDefinition -Name $policyName -DisplayName $policyDisplayName -description $policyDescription -SubscriptionId $CurrentSubscription.SubscriptionId -Policy $policyRulesFile -Parameter $policyParametersFile -Mode All
 $definition
-$assignment = New-AzureRMPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId -PolicyParameter $allowedLocationsFile -PolicyDefinition $definition
+$assignment = New-AzureRmPolicyAssignment -Name $assignmentName -PolicyDefinition $definition -Scope $policyScope.ResourceId -PolicyParameter $allowedImagesFile
 $assignment
+#$assignment = New-AzureRmPolicyAssignment -Name 'RestrictLocationPolicyAssignment' -PolicyDefinition $Policy -Scope $ResourceGroup.ResourceId -PolicyParameter .\AllowedLocations.json
 
 ######################################################>
 
@@ -70,7 +65,7 @@ $assignment
 New-AzureRmVm `
     -ResourceGroupName $resourceGroupName `
     -Name "myVM" `
-    -Location westindia `
+    -Location japaneast `
     -VirtualNetworkName "myVnet" `
     -SubnetName "mySubnet" `
     -SecurityGroupName "myNetworkSecurityGroup" `
@@ -82,8 +77,6 @@ New-AzureRmVm `
 
 <########################### Clean up ###########################
 
-Remove-AzureRmPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId
-Remove-AzureRmPolicyDefinition -Name $policyName
 Remove-AzureRmResourceGroup -Name $resourceGroupName
 
 #>
