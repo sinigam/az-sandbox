@@ -3,7 +3,13 @@
       "value": [
         "eastus",
         "eastus2",
-        "westeurope"
+        "centralus",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "ukwest",
+        "uksouth"
       ]
     }
 }

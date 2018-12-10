@@ -1,4 +1,57 @@
-﻿# Policy script to allow provisioning in specific locations
+AllowedLocations.json
+
+{
+    "listOfAllowedLocations":  {
+      "value": [
+        "eastus",
+        "eastus2",
+        "centralus",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "ukwest",
+        "uksouth"
+      ]
+    }
+}
+
+cleanupscript.ps1
+
+Remove-AzureRmPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId -Confirm:$false
+Remove-AzureRmPolicyDefinition -Name $policyName -Confirm:$false
+Remove-AzureRmResourceGroup -Name $resourceGroupName -Confirm:$false
+
+policy.parameters.json
+
+{
+	"listOfAllowedLocations": {
+		"type": "Array",
+		"metadata": {
+			"description": "The list of locations that can be specified when deploying resources.",
+			"strongType": "location",
+			"displayName": "Allowed locations"
+		}
+	}
+}
+
+policy.rules.json
+
+{
+	"if": {
+		"not": {
+			"field": "location",
+			"in": "[parameters('listOfAllowedLocations')]"
+		}
+	},
+	"then": {
+		"effect": "deny"
+	}
+}
+
+policy.script.ps1
+
+# Policy script to allow provisioning in specific locations
 
 # Instructions: Remove the '<' symbol on the head of each comment block to enable that section
 
@@ -8,12 +61,12 @@
 #Connect-AzureRmAccount
 
 # Get the list of subscriptions
-#Get-AzureRmSubscription
+Get-AzureRmSubscription
 
 # Select one of the subscriptions
 $SubscriptionName = 'Pay-As-You-Go'
 
-#Select-AzureRmSubscription $SubscriptionName
+Select-AzureRmSubscription $SubscriptionName
 
 # Store subscription id
 $CurrentSubscription = Get-AzureRmSubscription -SubscriptionName $SubscriptionName
@@ -29,7 +82,7 @@ New-AzureRmResourceGroup -Name $resourceGroupName -Location eastus -Tag @{Type='
 
 # To create the policy, we need to create the policy, then assign it to a scope
 # Policy related variables
-$policyName = 'allowed-locations-sid'
+$policyName = 'allowed-locations'
 $policyDisplayName = 'Allowed Locations'
 $policyDescription = 'This policy enables you to specify the locations that your organization can deploy.'
 
@@ -77,13 +130,5 @@ New-AzureRmVm `
     -PublicIpAddressName "myPublicIpAddress" `
     -Credential $cred `
     -OpenPorts 80,3389
-
-#>
-
-<########################### Clean up ###########################
-
-Remove-AzureRmPolicyAssignment -Name $assignmentName -Scope $policyScope.ResourceId
-Remove-AzureRmPolicyDefinition -Name $policyName
-Remove-AzureRmResourceGroup -Name $resourceGroupName
 
 #>
